@@ -13,8 +13,14 @@ export const GET = async () => {
   //2. Display list of student
   // const students = await prisma...
 
+  const students = await prisma.student.findMany({
+    orderBy: {
+      studentId: "asc",
+    },
+  });
+
   return NextResponse.json<StudentGetResponse>({
-    students: [], //replace empty array with result from DB
+    students, //replace empty array with result from DB
   });
 };
 
@@ -42,4 +48,32 @@ export const POST = async (request: NextRequest) => {
   // );
 
   // return NextResponse.json<StudentPostOKResponse>({ ok: true });
+
+  const existingStudent = await prisma.student.findUnique({
+    where: { studentId: body.studentId },
+  });
+
+  if (existingStudent) {
+    return NextResponse.json<StudentPostErrorResponse>(
+      { ok: false, message: "Student Id already exists" },
+      { status: 400 }
+    );
+  }
+
+  const newStudent = await prisma.student.create({
+    data: {
+      studentId: body.studentId,
+      firstName: body.firstName,
+      lastName: body.lastName,
+    },
+  });
+
+  if (!newStudent) {
+    return NextResponse.json<StudentPostErrorResponse>(
+      { ok: false, message: "Student Id already exists" },
+      { status: 400 }
+    );
+  }
+
+  return NextResponse.json<StudentPostOKResponse>({ ok: true });
 };
